@@ -73,7 +73,7 @@ class ChIRC
             if (status == off)
             {
                 status = initing;
-                thread = std::thread(&ChIRC::IRCThread);
+                thread = std::thread(&ChIRC::IRCThread, this);
             }
         }
         else
