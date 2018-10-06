@@ -37,7 +37,6 @@ class ChIRC
     std::thread thread;
     std::atomic<statusenum> status{ off };
     bool shouldrun{ false };
-    IRCClient IRC;
     IRCData data;
 
     void IRCThread()
@@ -54,16 +53,23 @@ class ChIRC
             status = joining;
             return;
         }
-        IRC.ReceiveData();
-        sendraw("JOIN " + data.comms_channel);
         statusenum compare = initing;
         if (!status.compare_exchange_strong(compare, running))
             return;
         logging::Info("Ready, %s %s %s %s", data.user.c_str(),
                       data.nick.c_str(), data.comms_channel.c_str(),
                       data.address.c_str());
+        std::thread joinChannel([=]() {
+            std::this_thread::sleep_for(std::chrono_literals::operator""s(1));
+            if (this && IRC.Connected())
+                sendraw("JOIN " + data.comms_channel);
+            logging::Info("IRC: Init complete.");
+        });
+        joinChannel.detach();
         while (IRC.Connected() && status == running)
+        {
             IRC.ReceiveData();
+        }
         status.store(joining);
     }
     void ChangeState(bool state)
@@ -87,6 +93,7 @@ class ChIRC
     }
 
 public:
+    IRCClient IRC;
     void Disconnect()
     {
         shouldrun = false;
