@@ -1,4 +1,4 @@
-#include "ucccccp.hpp"
+#include "../ucccccp/ucccccp.hpp"
 #include "IRCClient.h"
 #include <thread>
 #include <atomic>
