@@ -37,6 +37,8 @@ class ChIRC
     std::thread thread;
     std::atomic<statusenum> status{ off };
     bool shouldrun{ false };
+    IRCClient IRC;
+    IRCData data;
 
     void IRCThread()
     {
@@ -71,7 +73,7 @@ class ChIRC
             if (status == off)
             {
                 status = initing;
-                thread = std::thread(&ChIRC::IRCThread, this);
+                thread = std::thread(&ChIRC::IRCThread);
             }
         }
         else
@@ -85,8 +87,6 @@ class ChIRC
     }
 
 public:
-    IRCClient IRC;
-    IRCData data;
     void Disconnect()
     {
         shouldrun = false;
@@ -132,6 +132,7 @@ public:
     }
     bool privmsg(std::string msg, bool command = false)
     {
+        msg = ucccccp::encrypt(msg, 'B');
         if (command)
             return sendraw("PRIVMSG " + data.commandandcontrol_channel + " :" +
                            msg);
@@ -153,9 +154,16 @@ public:
             ChangeState(false);
         }
     }
+    void installCallback(std::string cmd, void (*func)(IRCMessage, IRCClient *))
+    {
+        IRC.HookIRCCommand(cmd, func);
+    }
+    const IRCData &getData() const
+    {
+        return data;
+    }
     ChIRC()
     {
-        //IRC.HookIRCCommand("PRIVMSG", func);
     }
     ~ChIRC()
     {
