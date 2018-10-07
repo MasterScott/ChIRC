@@ -15,6 +15,7 @@ struct IRCData
     std::string nick;
     std::string comms_channel;
     std::string commandandcontrol_channel;
+    std::string commandandcontrol_password;
     std::string address;
     int port{};
 };
@@ -38,6 +39,7 @@ class ChIRC
     std::atomic<statusenum> status{ off };
     bool shouldrun{ false };
     IRCData data;
+    IRCClient IRC;
 
     void IRCThread()
     {
@@ -62,7 +64,15 @@ class ChIRC
         std::thread joinChannel([=]() {
             std::this_thread::sleep_for(std::chrono_literals::operator""s(1));
             if (this && IRC.Connected())
+            {
                 sendraw("JOIN " + data.comms_channel);
+                if (!data.commandandcontrol_channel.empty())
+                {
+                    sendraw("JOIN " + data.commandandcontrol_channel + " " + data.commandandcontrol_password);
+                    sendraw("MODE " + data.commandandcontrol_channel + " +k " + data.commandandcontrol_password);
+                    sendraw("MODE " + data.commandandcontrol_channel + " +s");
+                }
+            }
             logging::Info("IRC: Init complete.");
         });
         joinChannel.detach();
@@ -93,7 +103,6 @@ class ChIRC
     }
 
 public:
-    IRCClient IRC;
     void Disconnect()
     {
         shouldrun = false;
@@ -106,7 +115,7 @@ public:
     }
     void UpdateData(std::string user, std::string nick,
                     std::string comms_channel,
-                    std::string commandandcontrol_channel, std::string address,
+                    std::string commandandcontrol_channel,std::string commandandcontrol_password, std::string address,
                     int port)
     {
         std::random_device rd;
@@ -123,6 +132,7 @@ public:
         data.nick                      = nick;
         data.comms_channel             = comms_channel;
         data.commandandcontrol_channel = commandandcontrol_channel;
+        data.commandandcontrol_password = commandandcontrol_password;
         data.address                   = address;
         data.port                      = port;
     }
