@@ -4,8 +4,6 @@
 #include <atomic>
 #include <algorithm>
 #include <random>
-// temp
-#include "core/logging.hpp"
 
 namespace ChIRC
 {
@@ -43,24 +41,16 @@ class ChIRC
 
     void IRCThread()
     {
-        logging::Info("Thread");
         if (!IRC.InitSocket() ||
             !IRC.Connect(data.address.c_str(), data.port) ||
             !IRC.Login(data.nick, data.user))
         {
-            logging::Info(
-                "Failed to connect, user %s, nick %s, address %s, port %i",
-                data.user.c_str(), data.nick.c_str(), data.address.c_str(),
-                data.port);
             status = joining;
             return;
         }
         statusenum compare = initing;
         if (!status.compare_exchange_strong(compare, running))
             return;
-        logging::Info("Ready, %s %s %s %s", data.user.c_str(),
-                      data.nick.c_str(), data.comms_channel.c_str(),
-                      data.address.c_str());
         std::thread joinChannel([=]() {
             std::this_thread::sleep_for(std::chrono_literals::operator""s(1));
             if (this && IRC.Connected())
@@ -73,7 +63,6 @@ class ChIRC
                     sendraw("MODE " + data.commandandcontrol_channel + " +s");
                 }
             }
-            logging::Info("IRC: Init complete.");
         });
         joinChannel.detach();
         while (IRC.Connected() && status == running)
