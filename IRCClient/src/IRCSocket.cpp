@@ -80,14 +80,13 @@ bool IRCSocket::Connect(char const* host, int port)
     addr.sin_addr = *((const in_addr*)he->h_addr);
     memset(&(addr.sin_zero), '\0', 8);
 
+    _connected = true;
     if (connect(_socket, (sockaddr*)&addr, sizeof(addr)) == SOCKET_ERROR)
     {
         std::cout << "Could not connect to: " << host << std::endl;
         closesocket(_socket);
         return false;
     }
-
-    _connected = true;
 
     return true;
 }
