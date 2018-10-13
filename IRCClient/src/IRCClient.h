@@ -20,6 +20,7 @@
 #include <vector>
 #include <list>
 #include "IRCSocket.h"
+#include <functional>
 
 class IRCClient;
 
@@ -71,7 +72,9 @@ struct IRCCommandHook
     IRCCommandHook() : function(NULL) {};
 
     std::string command;
-    void (*function)(IRCMessage /*message*/, IRCClient* /*client*/);
+    std::function<void(IRCMessage /*message*/, IRCClient* /*client*/, void *ptr)> function;
+    // A ptr that can be used for whatever
+    void *ptr;
 };
 
 class IRCClient
@@ -90,7 +93,7 @@ public:
 
     void ReceiveData();
 
-    void HookIRCCommand(std::string /*command*/, void (*function)(IRCMessage /*message*/, IRCClient* /*client*/));
+    void HookIRCCommand(std::string command, void *ptr /*ptr for whatever*/, std::function<void(IRCMessage /*message*/, IRCClient* /*client*/, void *ptr /*ptr for whatever*/)> function);
 
     void Parse(std::string /*data*/);
 

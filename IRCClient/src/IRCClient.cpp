@@ -19,6 +19,7 @@
 #include "IRCClient.h"
 #include "IRCHandler.h"
 
+
 std::vector<std::string> split(std::string const& text, char sep)
 {
     std::vector<std::string> tokens;
@@ -157,12 +158,13 @@ void IRCClient::Parse(std::string data)
     CallHook(command, ircMessage);
 }
 
-void IRCClient::HookIRCCommand(std::string command, void (*function)(IRCMessage /*message*/, IRCClient* /*client*/))
+void IRCClient::HookIRCCommand(std::string command, void *ptr /*ptr for whatever*/, std::function<void(IRCMessage /*message*/, IRCClient* /*client*/, void *ptr /*ptr for whatever*/)> function)
 {
     IRCCommandHook hook;
 
     hook.command = command;
     hook.function = function;
+    hook.ptr = ptr;
 
     _hooks.push_back(hook);
 }
@@ -176,7 +178,7 @@ void IRCClient::CallHook(std::string command, IRCMessage message)
     {
         if (itr->command == command)
         {
-            (*(itr->function))(message, this);
+            (itr->function)(message, this, itr->ptr);
             break;
         }
     }

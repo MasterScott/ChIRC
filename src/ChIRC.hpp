@@ -1,12 +1,11 @@
-#include "../ucccccp/ucccccp.hpp"
 #include "IRCClient.h"
 #include <thread>
 #include <atomic>
-#include <algorithm>
-#include <random>
+#include <unordered_map>
 
 namespace ChIRC
 {
+// Used for storing IRC Client data
 struct IRCData
 {
     std::string user;
@@ -16,6 +15,14 @@ struct IRCData
     std::string commandandcontrol_password;
     std::string address;
     int port{};
+    bool is_commandandcontrol{ false };
+    int id{};
+};
+// Used for storing data of C&C clients
+struct PeerData
+{
+    // unsigned int steamid;
+    std::chrono::time_point<std::chrono::system_clock> heartbeat{};
 };
 
 enum statusenum
@@ -38,58 +45,15 @@ class ChIRC
     bool shouldrun{ false };
     IRCData data;
     IRCClient IRC;
+    std::unordered_map<int, PeerData> peers;
+    std::vector<
+        std::pair<std::string, std::function<void(IRCMessage, IRCClient *)>>>
+        callbacks;
 
-    void IRCThread()
-    {
-        if (!IRC.InitSocket() ||
-            !IRC.Connect(data.address.c_str(), data.port) ||
-            !IRC.Login(data.nick, data.user))
-        {
-            status = joining;
-            return;
-        }
-        statusenum compare = initing;
-        if (!status.compare_exchange_strong(compare, running))
-            return;
-        std::thread joinChannel([=]() {
-            std::this_thread::sleep_for(std::chrono_literals::operator""s(1));
-            if (this && IRC.Connected())
-            {
-                sendraw("JOIN " + data.comms_channel);
-                if (!data.commandandcontrol_channel.empty())
-                {
-                    sendraw("JOIN " + data.commandandcontrol_channel + " " + data.commandandcontrol_password);
-                    sendraw("MODE " + data.commandandcontrol_channel + " +k " + data.commandandcontrol_password);
-                    sendraw("MODE " + data.commandandcontrol_channel + " +s");
-                }
-            }
-        });
-        joinChannel.detach();
-        while (IRC.Connected() && status == running)
-        {
-            IRC.ReceiveData();
-        }
-        status.store(joining);
-    }
-    void ChangeState(bool state)
-    {
-        if (state)
-        {
-            if (status == off)
-            {
-                status = initing;
-                thread = std::thread(&ChIRC::IRCThread, this);
-            }
-        }
-        else
-        {
-            status = stopping;
-            IRC.Disconnect();
-            if (thread.joinable())
-                thread.join();
-            status = off;
-        }
-    }
+    void IRCThread();
+    void ChangeState(bool state);
+    static void basicHandler(IRCMessage msg, IRCClient *irc, void *ptr);
+    void updateID();
 
 public:
     void Disconnect()
@@ -104,65 +68,39 @@ public:
     }
     void UpdateData(std::string user, std::string nick,
                     std::string comms_channel,
-                    std::string commandandcontrol_channel,std::string commandandcontrol_password, std::string address,
-                    int port)
+                    std::string commandandcontrol_channel,
+                    std::string commandandcontrol_password, std::string address,
+                    int port);
+    bool sendraw(std::string msg);
+    bool privmsg(std::string msg, bool command = false);
+    void sendSignon(bool reply)
     {
-        std::random_device rd;
-        std::mt19937 e{ rd() };
-        std::uniform_int_distribution<int> dist{ 1, 10000 };
-        // Prevent dupes
-        nick.append("-" + std::to_string(dist(e)));
-
-        // Fix spaces
-        std::replace(nick.begin(), nick.end(), ' ', '_');
-        std::replace(nick.begin(), nick.end(), ' ', '_');
-
-        data.user                      = user;
-        data.nick                      = nick;
-        data.comms_channel             = comms_channel;
-        data.commandandcontrol_channel = commandandcontrol_channel;
-        data.commandandcontrol_password = commandandcontrol_password;
-        data.address                   = address;
-        data.port                      = port;
-    }
-    bool sendraw(std::string msg)
-    {
-        if (msg.empty())
-            return false;
-        if (status.load() == running)
-        {
-            if (IRC.SendIRC(msg))
-                return true;
-        }
-        return false;
-    }
-    bool privmsg(std::string msg, bool command = false)
-    {
-        msg = ucccccp::encrypt(msg, 'B');
-        if (command)
-            return sendraw("PRIVMSG " + data.commandandcontrol_channel + " :" +
-                           msg);
+        if (!data.is_commandandcontrol)
+            return;
+        std::string msg;
+        if (reply)
+            msg = "cc_signonrep";
         else
-            return sendraw("PRIVMSG " + data.comms_channel + " :" + msg);
+            msg = "cc_signon";
+        msg += "$id";
+        msg += std::to_string(data.id);
+        privmsg(msg, true);
     }
-    void Update()
+    void sendHeartbeat()
     {
-        if (status == joining)
-        {
-            IRC.Disconnect();
-            thread.join();
-            status = off;
-        }
-        if (shouldrun && status == off)
-            ChangeState(true);
-        else if (!shouldrun && status == running)
-        {
-            ChangeState(false);
-        }
+        if (!data.is_commandandcontrol)
+            return;
+        std::string msg = "cc_heartbeat";
+        msg += std::to_string(data.id);
+        privmsg(msg, true);
     }
-    void installCallback(std::string cmd, void (*func)(IRCMessage, IRCClient *))
+
+    void Update();
+
+    void installCallback(std::string cmd,
+                         std::function<void(IRCMessage, IRCClient *)> func)
     {
-        IRC.HookIRCCommand(cmd, func);
+        callbacks.emplace_back(cmd, func);
     }
     const IRCData &getData() const
     {
@@ -170,6 +108,7 @@ public:
     }
     ChIRC()
     {
+        IRC.HookIRCCommand("PRIVMSG", this, basicHandler);
     }
     ~ChIRC()
     {
