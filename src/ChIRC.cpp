@@ -56,6 +56,7 @@ void ChIRC::ChIRC::basicHandler(IRCMessage msg, IRCClient *irc, void *ptr)
 
                 PeerData peer{};
                 peer.heartbeat        = std::chrono::system_clock::now();
+                peer.nickname         = msg.prefix.nick;
                 this_ChIRC->peers[id] = peer;
             }
             else if (rawmsg.find("cc_heartbeat") == 0)
@@ -93,7 +94,7 @@ void ChIRC::ChIRC::basicHandler(IRCMessage msg, IRCClient *irc, void *ptr)
 void ChIRC::ChIRC::IRCThread()
 {
     if (!IRC.InitSocket() || !IRC.Connect(data.address.c_str(), data.port) ||
-        !IRC.Login(data.nick + ' ' + std::to_string(data.id), data.user))
+        !IRC.Login(data.nick + '-' + std::to_string(data.id), data.user))
     {
         status = joining;
         return;
@@ -225,10 +226,12 @@ void ChIRC::ChIRC::Update()
                 std::chrono::system_clock::now() - i.second.heartbeat)
                 .count() >= 10)
         {
-            std::cout << "Timed out peer " << i.first << std::endl;
             todelete = i.first;
         }
     }
     if (todelete != -1)
+    {
         peers.erase(todelete);
+        std::cout << "Timed out peer " << todelete << std::endl;
+    }
 }

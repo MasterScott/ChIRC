@@ -23,6 +23,7 @@ struct PeerData
 {
     // unsigned int steamid;
     std::chrono::time_point<std::chrono::system_clock> heartbeat{};
+    std::string nickname;
 };
 
 enum statusenum
@@ -105,6 +106,10 @@ public:
     const IRCData &getData() const
     {
         return data;
+    }
+    const std::unordered_map<int, PeerData> getPeers()
+    {
+        return peers;
     }
     ChIRC()
     {
