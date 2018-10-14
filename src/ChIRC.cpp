@@ -85,7 +85,6 @@ void ChIRC::ChIRC::basicHandler(IRCMessage msg, IRCClient *irc, void *ptr)
                 else
                     std::cout << "Heartbeat from unknown peer recieved: " << id
                               << std::endl;
-                std::cout << id << " heartbeat got" << std::endl;
             }
         }
     }
