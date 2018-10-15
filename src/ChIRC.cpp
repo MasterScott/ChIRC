@@ -190,26 +190,9 @@ void ChIRC::ChIRC::UpdateData(std::string user, std::string nick,
     data.port                       = port;
 }
 
-void ChIRC::ChIRC::UpdateState(std::string user, std::string nick,
-                              std::string comms_channel,
-                              std::string commandandcontrol_channel,
-                              std::string commandandcontrol_password,
-                              std::string address, int port, bool partying)
+void ChIRC::ChIRC::UpdateState(bool partying)
 {
-    updateID();
-
-    // Fix spaces
-    std::replace(nick.begin(), nick.end(), ' ', '_');
-    std::replace(nick.begin(), nick.end(), ' ', '_');
-
-    data.user                       = user;
-    data.nick                       = nick;
-    data.comms_channel              = comms_channel;
-    data.commandandcontrol_channel  = commandandcontrol_channel;
-    data.commandandcontrol_password = commandandcontrol_password;
-    data.address                    = address;
     data.is_partying                = partying;
-    data.port                       = port;
 }
 
 bool ChIRC::ChIRC::sendraw(std::string msg)

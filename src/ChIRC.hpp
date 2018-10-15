@@ -74,11 +74,7 @@ public:
                     std::string commandandcontrol_channel,
                     std::string commandandcontrol_password, std::string address,
                     int port);
-    void UpdateState(std::string user, std::string nick,
-                    std::string comms_channel,
-                    std::string commandandcontrol_channel,
-                    std::string commandandcontrol_password, std::string address,
-                    int port, bool partying);
+    void UpdateState(bool partying);
     bool sendraw(std::string msg);
     bool privmsg(std::string msg, bool command = false);
     void sendSignon(bool reply)
