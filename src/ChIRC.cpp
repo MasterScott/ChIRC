@@ -61,7 +61,9 @@ void ChIRC::ChIRC::basicHandler(IRCMessage msg, IRCClient *irc, void *ptr)
             }
             else if (rawmsg.find("cc_heartbeat") == 0)
             {
-                std::string string_id = rawmsg.substr(12);
+                if (rawmsg.find("-") == std::string::npos)
+                    return;
+                std::string string_id = rawmsg.substr(12, rawmsg.find("-") - 12);
                 int id;
                 try
                 {
@@ -71,7 +73,15 @@ void ChIRC::ChIRC::basicHandler(IRCMessage msg, IRCClient *irc, void *ptr)
                 {
                     return;
                 }
-
+                bool party = false;
+                try
+                {
+                    party = std::stoi(rawmsg.substr(rawmsg.find("-")));
+                }
+                catch (std::invalid_argument)
+                {
+                    return;
+                }
                 if (id == this_ChIRC->data.id)
                 {
                     this_ChIRC->IRC.Disconnect();
@@ -80,8 +90,11 @@ void ChIRC::ChIRC::basicHandler(IRCMessage msg, IRCClient *irc, void *ptr)
                 }
 
                 if (this_ChIRC->peers.find(id) != this_ChIRC->peers.end())
+                {
                     this_ChIRC->peers[id].heartbeat =
                         std::chrono::system_clock::now();
+                    this_ChIRC->peers[id].can_party = party;
+                }
                 else
                     std::cout << "Heartbeat from unknown peer recieved: " << id
                               << std::endl;
@@ -155,7 +168,6 @@ void ChIRC::ChIRC::updateID()
     std::uniform_int_distribution<int> dist{ 1, 10000 };
     data.id = dist(e);
 }
-
 void ChIRC::ChIRC::UpdateData(std::string user, std::string nick,
                               std::string comms_channel,
                               std::string commandandcontrol_channel,
@@ -174,6 +186,29 @@ void ChIRC::ChIRC::UpdateData(std::string user, std::string nick,
     data.commandandcontrol_channel  = commandandcontrol_channel;
     data.commandandcontrol_password = commandandcontrol_password;
     data.address                    = address;
+    data.is_partying                = false;
+    data.port                       = port;
+}
+
+void ChIRC::ChIRC::UpdateState(std::string user, std::string nick,
+                              std::string comms_channel,
+                              std::string commandandcontrol_channel,
+                              std::string commandandcontrol_password,
+                              std::string address, int port, bool partying)
+{
+    updateID();
+
+    // Fix spaces
+    std::replace(nick.begin(), nick.end(), ' ', '_');
+    std::replace(nick.begin(), nick.end(), ' ', '_');
+
+    data.user                       = user;
+    data.nick                       = nick;
+    data.comms_channel              = comms_channel;
+    data.commandandcontrol_channel  = commandandcontrol_channel;
+    data.commandandcontrol_password = commandandcontrol_password;
+    data.address                    = address;
+    data.is_partying                = partying;
     data.port                       = port;
 }
 
