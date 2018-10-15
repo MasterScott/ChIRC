@@ -61,7 +61,7 @@ void ChIRC::ChIRC::basicHandler(IRCMessage msg, IRCClient *irc, void *ptr)
             }
             else if (rawmsg.find("cc_heartbeat") == 0)
             {
-                if (rawmsg.find("-") == std::string::npos)
+                if (rawmsg.find("-") == rawmsg.npos)
                     return;
                 std::string string_id = rawmsg.substr(12, rawmsg.find("-") - 12);
                 int id;
@@ -76,7 +76,7 @@ void ChIRC::ChIRC::basicHandler(IRCMessage msg, IRCClient *irc, void *ptr)
                 bool party = false;
                 try
                 {
-                    party = std::stoi(rawmsg.substr(rawmsg.find("-")));
+                    party = std::stoi(rawmsg.substr(rawmsg.find("-") + 1));
                 }
                 catch (std::invalid_argument)
                 {
