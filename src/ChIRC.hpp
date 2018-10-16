@@ -17,6 +17,7 @@ struct IRCData
     int port{};
     bool is_commandandcontrol{ false };
     bool is_partying{ false };
+    int party_size{};
     int id{};
 };
 // Used for storing data of C&C clients
@@ -26,6 +27,7 @@ struct PeerData
     std::chrono::time_point<std::chrono::system_clock> heartbeat{};
     std::string nickname;
     bool can_party{ false };
+    int party_size{};
 };
 
 enum statusenum
@@ -74,7 +76,7 @@ public:
                     std::string commandandcontrol_channel,
                     std::string commandandcontrol_password, std::string address,
                     int port);
-    void UpdateState(bool partying);
+    void UpdateState(bool partying, int size);
     bool sendraw(std::string msg);
     bool privmsg(std::string msg, bool command = false);
     void sendSignon(bool reply)
@@ -98,6 +100,8 @@ public:
         msg += std::to_string(data.id);
         msg += "-";
         msg += std::to_string(data.is_partying);
+        msg += "_";
+        msg += std::to_string(data.party_size);
         privmsg(msg, true);
     }
 

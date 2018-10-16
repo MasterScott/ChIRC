@@ -63,6 +63,8 @@ void ChIRC::ChIRC::basicHandler(IRCMessage msg, IRCClient *irc, void *ptr)
             {
                 if (rawmsg.find("-") == rawmsg.npos)
                     return;
+                if (rawmsg.find("_") == rawmsg.npos)
+                    return;
                 std::string string_id = rawmsg.substr(12, rawmsg.find("-") - 12);
                 int id;
                 try
@@ -76,7 +78,16 @@ void ChIRC::ChIRC::basicHandler(IRCMessage msg, IRCClient *irc, void *ptr)
                 bool party = false;
                 try
                 {
-                    party = std::stoi(rawmsg.substr(rawmsg.find("-") + 1));
+                    party = std::stoi(rawmsg.substr(rawmsg.find("-") + 1, rawmsg.find("_") - rawmsg.find("-") - 1));
+                }
+                catch (std::invalid_argument)
+                {
+                    return;
+                }
+                int size = 0;
+                try
+                {
+                    size = std::stoi(rawmsg.substr(rawmsg.find("-") + 1));
                 }
                 catch (std::invalid_argument)
                 {
@@ -94,6 +105,7 @@ void ChIRC::ChIRC::basicHandler(IRCMessage msg, IRCClient *irc, void *ptr)
                     this_ChIRC->peers[id].heartbeat =
                         std::chrono::system_clock::now();
                     this_ChIRC->peers[id].can_party = party;
+                    this_ChIRC->peers[id].party_size = size;
                 }
                 else
                     std::cout << "Heartbeat from unknown peer recieved: " << id
@@ -187,12 +199,14 @@ void ChIRC::ChIRC::UpdateData(std::string user, std::string nick,
     data.commandandcontrol_password = commandandcontrol_password;
     data.address                    = address;
     data.is_partying                = false;
+    data.party_size                 = 0;
     data.port                       = port;
 }
 
-void ChIRC::ChIRC::UpdateState(bool partying)
+void ChIRC::ChIRC::UpdateState(bool partying, int party_size)
 {
     data.is_partying                = partying;
+    data.party_size                 = party_size;
 }
 
 bool ChIRC::ChIRC::sendraw(std::string msg)
