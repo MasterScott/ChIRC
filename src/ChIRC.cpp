@@ -33,11 +33,25 @@ void ChIRC::ChIRC::basicHandler(IRCMessage msg, IRCClient *irc, void *ptr)
                 if (rawmsg.find("cc_signonrep") == 0)
                     reply = true;
 
-                std::string string_id = rawmsg.substr(rawmsg.find("$id") + 3);
+                size_t id_loc     = rawmsg.find("$");
+                size_t is_bot_loc = rawmsg.find('$', id_loc + 1);
+
                 int id;
                 try
                 {
-                    id = std::stoi(string_id);
+                    std::string string =
+                        rawmsg.substr(id_loc + 1, is_bot_loc - id_loc);
+                    id = std::stoi(string);
+                }
+                catch (std::invalid_argument)
+                {
+                    return;
+                }
+                bool is_bot;
+                try
+                {
+                    std::string string = rawmsg.substr(is_bot_loc + 1);
+                    is_bot             = std::stoi(string);
                 }
                 catch (std::invalid_argument)
                 {
@@ -55,39 +69,35 @@ void ChIRC::ChIRC::basicHandler(IRCMessage msg, IRCClient *irc, void *ptr)
                     this_ChIRC->sendSignon(true);
 
                 PeerData peer{};
-                peer.heartbeat        = std::chrono::system_clock::now();
-                peer.nickname         = msg.prefix.nick;
+                peer.heartbeat = std::chrono::system_clock::now();
+                peer.nickname  = msg.prefix.nick;
+                peer.is_bot    = is_bot;
+                std::lock_guard<std::mutex> lock(this_ChIRC->peers_lock);
                 this_ChIRC->peers[id] = peer;
             }
             else if (rawmsg.find("cc_heartbeat") == 0)
             {
-                if (rawmsg.find("-") == rawmsg.npos)
+                std::cout << "Heartbeat: " << rawmsg << std::endl;
+                size_t party_size = rawmsg.find('$');
+
+                if (party_size == rawmsg.npos)
                     return;
-                if (rawmsg.find("_") == rawmsg.npos)
-                    return;
-                std::string string_id = rawmsg.substr(12, rawmsg.find("-") - 12);
+                // size_t next = rawmsg.find('$', party_size + 1);
+
                 int id;
                 try
                 {
-                    id = std::stoi(string_id);
+                    std::string string_id = rawmsg.substr(12, party_size - 12);
+                    id                    = std::stoi(string_id);
                 }
                 catch (std::invalid_argument)
                 {
                     return;
                 }
-                bool party = false;
+                int size;
                 try
                 {
-                    party = std::stoi(rawmsg.substr(rawmsg.find("-") + 1, rawmsg.find("_") - rawmsg.find("-") - 1));
-                }
-                catch (std::invalid_argument)
-                {
-                    return;
-                }
-                int size = 0;
-                try
-                {
-                    size = std::stoi(rawmsg.substr(rawmsg.find("-") + 1));
+                    size = std::stoi(rawmsg.substr(party_size + 1));
                 }
                 catch (std::invalid_argument)
                 {
@@ -97,14 +107,15 @@ void ChIRC::ChIRC::basicHandler(IRCMessage msg, IRCClient *irc, void *ptr)
                 {
                     this_ChIRC->IRC.Disconnect();
                     this_ChIRC->updateID();
+                    // Will auto restart
                     return;
                 }
 
                 if (this_ChIRC->peers.find(id) != this_ChIRC->peers.end())
                 {
+                    std::lock_guard<std::mutex> lock(this_ChIRC->peers_lock);
                     this_ChIRC->peers[id].heartbeat =
                         std::chrono::system_clock::now();
-                    this_ChIRC->peers[id].can_party = party;
                     this_ChIRC->peers[id].party_size = size;
                 }
                 else
@@ -184,7 +195,7 @@ void ChIRC::ChIRC::UpdateData(std::string user, std::string nick,
                               std::string comms_channel,
                               std::string commandandcontrol_channel,
                               std::string commandandcontrol_password,
-                              std::string address, int port)
+                              std::string address, int port, bool is_bot)
 {
     updateID();
 
@@ -198,15 +209,8 @@ void ChIRC::ChIRC::UpdateData(std::string user, std::string nick,
     data.commandandcontrol_channel  = commandandcontrol_channel;
     data.commandandcontrol_password = commandandcontrol_password;
     data.address                    = address;
-    data.is_partying                = false;
-    data.party_size                 = 0;
     data.port                       = port;
-}
-
-void ChIRC::ChIRC::UpdateState(bool partying, int party_size)
-{
-    data.is_partying                = partying;
-    data.party_size                 = party_size;
+    data.is_bot                     = is_bot;
 }
 
 bool ChIRC::ChIRC::sendraw(std::string msg)

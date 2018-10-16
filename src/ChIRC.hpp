@@ -2,10 +2,12 @@
 #include <thread>
 #include <atomic>
 #include <unordered_map>
+#include <mutex>
 
 namespace ChIRC
 {
-// Used for storing IRC Client data
+// Used for storing IRC Client data, should never be modifed while irc thread
+// running
 struct IRCData
 {
     std::string user;
@@ -16,18 +18,22 @@ struct IRCData
     std::string address;
     int port{};
     bool is_commandandcontrol{ false };
-    bool is_partying{ false };
-    int party_size{};
     int id{};
+    bool is_bot = 0;
 };
+
+struct GameState
+{
+    int party_size = -1;
+};
+
 // Used for storing data of C&C clients
 struct PeerData
 {
-    // unsigned int steamid;
     std::chrono::time_point<std::chrono::system_clock> heartbeat{};
     std::string nickname;
-    bool can_party{ false };
-    int party_size{};
+    bool is_bot    = false;
+    int party_size = -1;
 };
 
 enum statusenum
@@ -45,20 +51,41 @@ enum statusenum
 
 class ChIRC
 {
+    // Thread for IRC socket etc etc
     std::thread thread;
+    // Status of IRC thread
     std::atomic<statusenum> status{ off };
+    // If IRC is supposed to run, used for autorestart
     bool shouldrun{ false };
+    // Contains core irc data, should'nt be modified while main thread is
+    // running
     IRCData data;
+    // IRC client itself
     IRCClient IRC;
+    // Unordered map containing peers
     std::unordered_map<int, PeerData> peers;
+    std::mutex peers_lock;
+    // Contains backwards compatible callbacks
     std::vector<
         std::pair<std::string, std::function<void(IRCMessage, IRCClient *)>>>
         callbacks;
+    // Contains game data that might change at any moment. Thread safe.
+    GameState game_state;
+    std::mutex game_state_lock;
 
     void IRCThread();
     void ChangeState(bool state);
     static void basicHandler(IRCMessage msg, IRCClient *irc, void *ptr);
     void updateID();
+    void sendHeartbeat()
+    {
+        if (!data.is_commandandcontrol)
+            return;
+        std::string msg = "cc_heartbeat";
+        msg += std::to_string(data.id);
+        msg += '$' + std::to_string(game_state.party_size);
+        privmsg(msg, true);
+    }
 
 public:
     void Disconnect()
@@ -75,8 +102,7 @@ public:
                     std::string comms_channel,
                     std::string commandandcontrol_channel,
                     std::string commandandcontrol_password, std::string address,
-                    int port);
-    void UpdateState(bool partying, int size);
+                    int port, bool is_bot = false);
     bool sendraw(std::string msg);
     bool privmsg(std::string msg, bool command = false);
     void sendSignon(bool reply)
@@ -88,21 +114,19 @@ public:
             msg = "cc_signonrep";
         else
             msg = "cc_signon";
-        msg += "$id";
-        msg += std::to_string(data.id);
+        msg += '$' + std::to_string(data.id);
+        msg += '$' + std::to_string(data.is_bot);
         privmsg(msg, true);
     }
-    void sendHeartbeat()
+    void setState(GameState &state)
     {
-        if (!data.is_commandandcontrol)
-            return;
-        std::string msg = "cc_heartbeat";
-        msg += std::to_string(data.id);
-        msg += "-";
-        msg += std::to_string(data.is_partying);
-        msg += "_";
-        msg += std::to_string(data.party_size);
-        privmsg(msg, true);
+        std::lock_guard<std::mutex> lock(game_state_lock);
+        game_state = state;
+    }
+    GameState getState()
+    {
+        std::lock_guard<std::mutex> lock(game_state_lock);
+        return game_state;
     }
 
     void Update();
@@ -118,6 +142,7 @@ public:
     }
     const std::unordered_map<int, PeerData> getPeers()
     {
+        std::lock_guard<std::mutex> lock(peers_lock);
         return peers;
     }
     ChIRC()
