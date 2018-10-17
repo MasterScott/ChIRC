@@ -9,6 +9,17 @@ void ChIRC::ChIRC::basicHandler(IRCMessage msg, IRCClient *irc, void *ptr)
     ChIRC *this_ChIRC = static_cast<ChIRC *>(ptr);
     if (!this_ChIRC)
         return;
+    if (msg.parameters.empty())
+        return;
+    try
+    {
+        msg.parameters.at(0);
+        msg.parameters.at(1);
+    }
+    catch (std::out_of_range)
+    {
+        return;
+    }
     auto &callbacks = this_ChIRC->callbacks;
     for (auto &i : callbacks)
     {
