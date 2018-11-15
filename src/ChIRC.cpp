@@ -151,6 +151,7 @@ void ChIRC::ChIRC::IRCThread()
                 sendraw("MODE " + data.commandandcontrol_channel + " +k " +
                         data.commandandcontrol_password);
                 sendraw("MODE " + data.commandandcontrol_channel + " +s");
+                sendraw("MODE " + data.commandandcontrol_channel + " +n");
             }
             else
                 data.is_commandandcontrol = false;

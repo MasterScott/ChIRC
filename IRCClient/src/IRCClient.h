@@ -72,9 +72,9 @@ struct IRCCommandHook
     IRCCommandHook() : function(NULL) {};
 
     std::string command;
-    std::function<void(IRCMessage /*message*/, IRCClient* /*client*/, void *ptr)> function;
+    std::function<void(IRCMessage /*message*/, IRCClient* /*client*/, void *context)> function;
     // A ptr that can be used for whatever
-    void *ptr;
+    void *context;
 };
 
 class IRCClient
@@ -93,7 +93,7 @@ public:
 
     void ReceiveData();
 
-    void HookIRCCommand(std::string command, void *ptr /*ptr for whatever*/, std::function<void(IRCMessage /*message*/, IRCClient* /*client*/, void *ptr /*ptr for whatever*/)> function);
+    void HookIRCCommand(std::string command, void *context /*ptr for whatever*/, std::function<void(IRCMessage /*message*/, IRCClient* /*client*/, void *context /*ptr for whatever*/)> function);
 
     void Parse(std::string /*data*/);
 
