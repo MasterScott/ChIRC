@@ -39,7 +39,6 @@ void ChIRC::ChIRC::basicHandler(IRCMessage msg, IRCClient *irc, void *context)
         if (!ucccccp::validate(rawmsg))
             return;
         rawmsg = ucccccp::decrypt(rawmsg);
-        std::cout << rawmsg << std::endl;
         if (channel == this_ChIRC->data.commandandcontrol_channel &&
             this_ChIRC->data.is_commandandcontrol)
         {
@@ -84,7 +83,7 @@ void ChIRC::ChIRC::basicHandler(IRCMessage msg, IRCClient *irc, void *context)
                     id = std::stoi(rawmsg.substr(id_loc, is_bot_loc - id_loc));
                     is_bot = std::stoi(rawmsg.substr(is_bot_loc));
                 } catch (std::invalid_argument) {
-                    std::cout << "ChIRC: Recieved invalid auth " << rawmsg << std::endl;
+                    std::cout << "ChIRC: Recieved invalid auth" << std::endl;
                     return;
                 }
                 std::lock_guard<std::mutex> lock(this_ChIRC->peers_lock);
@@ -269,6 +268,6 @@ void ChIRC::ChIRC::Update()
     {
         std::lock_guard<std::mutex> lock(peers_lock);
         peers.erase(todelete);
-        std::cout << "Timed out peer " << todelete << std::endl;
+        std::cout << "ChIRC: Timed out peer " << todelete << std::endl;
     }
 }
