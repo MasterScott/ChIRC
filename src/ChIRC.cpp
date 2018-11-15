@@ -4,9 +4,13 @@
 #include "../ucccccp/ucccccp.hpp"
 #include "timer.hpp"
 
-void ChIRC::ChIRC::basicHandler(IRCMessage msg, IRCClient *irc, void *ptr)
+constexpr std::string_view heartbeat = "cc_hb";
+constexpr std::string_view reqauth = "cc_reqauth";
+constexpr std::string_view auth = "cc_auth";
+
+void ChIRC::ChIRC::basicHandler(IRCMessage msg, IRCClient *irc, void *context)
 {
-    ChIRC *this_ChIRC = static_cast<ChIRC *>(ptr);
+    ChIRC *this_ChIRC = static_cast<ChIRC *>(context);
     if (!this_ChIRC)
         return;
     if (msg.parameters.empty())
@@ -35,106 +39,93 @@ void ChIRC::ChIRC::basicHandler(IRCMessage msg, IRCClient *irc, void *ptr)
         if (!ucccccp::validate(rawmsg))
             return;
         rawmsg = ucccccp::decrypt(rawmsg);
+        std::cout << rawmsg << std::endl;
         if (channel == this_ChIRC->data.commandandcontrol_channel &&
             this_ChIRC->data.is_commandandcontrol)
         {
-            if (rawmsg.find("cc_signon") == 0)
+            if (rawmsg.find(heartbeat.data()) == 0)
             {
-                bool reply = false;
-                if (rawmsg.find("cc_signonrep") == 0)
-                    reply = true;
+                int id = 0;
+                int party_size = 0;
+                size_t id_loc = rawmsg.find('$') + 1;
+                size_t party_size_loc = rawmsg.find('$', id_loc) + 1;
 
-                size_t id_loc     = rawmsg.find("$");
-                size_t is_bot_loc = rawmsg.find('$', id_loc + 1);
-
-                int id;
-                try
-                {
-                    std::string string =
-                        rawmsg.substr(id_loc + 1, is_bot_loc - id_loc);
-                    id = std::stoi(string);
-                }
-                catch (std::invalid_argument)
-                {
-                    return;
-                }
-                bool is_bot;
-                try
-                {
-                    std::string string = rawmsg.substr(is_bot_loc + 1);
-                    is_bot             = std::stoi(string);
-                }
-                catch (std::invalid_argument)
-                {
+                try {
+                    id = std::stoi(rawmsg.substr(id_loc, party_size_loc - id_loc));
+                    party_size = std::stoi(rawmsg.substr(party_size_loc));
+                } catch (std::invalid_argument) {
+                    std::cout << "ChIRC: Recieved invalid heartbeat" << std::endl;
                     return;
                 }
 
-                if (id == this_ChIRC->data.id)
-                {
-                    this_ChIRC->IRC.Disconnect();
-                    this_ChIRC->updateID();
-                    return;
-                }
-
-                if (!reply)
-                    this_ChIRC->sendSignon(true);
-
-                PeerData peer{};
-                peer.heartbeat = std::chrono::system_clock::now();
-                peer.nickname  = msg.prefix.nick;
-                peer.is_bot    = is_bot;
                 std::lock_guard<std::mutex> lock(this_ChIRC->peers_lock);
-                this_ChIRC->peers[id] = peer;
-            }
-            else if (rawmsg.find("cc_heartbeat") == 0)
-            {
-                std::cout << "Heartbeat: " << rawmsg << std::endl;
-                size_t party_size = rawmsg.find('$');
-
-                if (party_size == rawmsg.npos)
-                    return;
-                // size_t next = rawmsg.find('$', party_size + 1);
-
-                int id;
-                try
+                if (this_ChIRC->peers.find(id) == this_ChIRC->peers.end())
                 {
-                    std::string string_id = rawmsg.substr(12, party_size - 12);
-                    id                    = std::stoi(string_id);
-                }
-                catch (std::invalid_argument)
-                {
-                    return;
-                }
-                int size;
-                try
-                {
-                    size = std::stoi(rawmsg.substr(party_size + 1));
-                }
-                catch (std::invalid_argument)
-                {
-                    return;
-                }
-                if (id == this_ChIRC->data.id)
-                {
-                    this_ChIRC->IRC.Disconnect();
-                    this_ChIRC->updateID();
-                    // Will auto restart
-                    return;
-                }
-
-                if (this_ChIRC->peers.find(id) != this_ChIRC->peers.end())
-                {
-                    std::lock_guard<std::mutex> lock(this_ChIRC->peers_lock);
-                    this_ChIRC->peers[id].heartbeat =
-                        std::chrono::system_clock::now();
-                    this_ChIRC->peers[id].party_size = size;
+                    // Not found in peers. Ask for auth.
+                    this_ChIRC->privmsg(std::string(reqauth) + '$' + std::to_string(id), true);
                 }
                 else
-                    std::cout << "Heartbeat from unknown peer recieved: " << id
-                              << std::endl;
+                {
+                    // Found in peers. Update peer.
+                    auto &peer = this_ChIRC->peers[id];
+                    peer.heartbeat = std::chrono::system_clock::now();
+                    peer.party_size = party_size;
+                }
+            }
+            else
+            if (rawmsg.find(auth.data()) == 0)
+            {
+                int id = 0;
+                bool is_bot = false;
+                size_t id_loc = rawmsg.find('$') + 1;
+                size_t is_bot_loc = rawmsg.find('$', id_loc) + 1;
+
+                try {
+                    id = std::stoi(rawmsg.substr(id_loc, is_bot_loc - id_loc));
+                    is_bot = std::stoi(rawmsg.substr(is_bot_loc));
+                } catch (std::invalid_argument) {
+                    std::cout << "ChIRC: Recieved invalid auth " << rawmsg << std::endl;
+                    return;
+                }
+                std::lock_guard<std::mutex> lock(this_ChIRC->peers_lock);
+                PeerData peer = {};
+                peer.heartbeat = std::chrono::system_clock::now();
+                peer.is_bot = is_bot;
+                peer.nickname = msg.prefix.nick;
+                this_ChIRC->peers[id] = std::move(peer);
+            }
+            else if (rawmsg.find(reqauth.data()) == 0)
+            {
+                int id = 0;
+                size_t id_loc = rawmsg.find('$') + 1;
+                try {
+                    id = std::stoi(rawmsg.substr(id_loc));
+                }
+                catch (std::invalid_argument)
+                {
+                    std::cout << "ChIRC: Recieved invalid reqauth" << std::endl;
+                    return;
+                }
+                static Timer last_req_auth{};
+                if (last_req_auth.test_and_set(1000) && id == this_ChIRC->data.id)
+                {
+                    this_ChIRC->sendAuth();
+                }
             }
         }
     }
+}
+
+void ChIRC::ChIRC::sendHeartbeat()
+{
+    std::string output = std::string(heartbeat) + '$' + std::to_string(data.id) + "$" + std::to_string(game_state.load().party_size);
+    privmsg(output, true);
+}
+
+void ChIRC::ChIRC::sendAuth()
+{
+    std::string output = std::string(auth) + '$' + std::to_string(data.id) + '$' + std::to_string(data.is_bot);
+    privmsg(output, true);
 }
 
 void ChIRC::ChIRC::IRCThread()
@@ -161,7 +152,6 @@ void ChIRC::ChIRC::IRCThread()
                 sendraw("MODE " + data.commandandcontrol_channel + " +k " +
                         data.commandandcontrol_password);
                 sendraw("MODE " + data.commandandcontrol_channel + " +s");
-                this->sendSignon(false);
             }
             else
                 data.is_commandandcontrol = false;
@@ -277,6 +267,7 @@ void ChIRC::ChIRC::Update()
     }
     if (todelete != -1)
     {
+        std::lock_guard<std::mutex> lock(peers_lock);
         peers.erase(todelete);
         std::cout << "Timed out peer " << todelete << std::endl;
     }

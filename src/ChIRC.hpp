@@ -19,7 +19,7 @@ struct IRCData
     int port{};
     bool is_commandandcontrol{ false };
     int id{};
-    bool is_bot = 0;
+    bool is_bot{false};
 };
 
 struct GameState
@@ -70,22 +70,14 @@ class ChIRC
         std::pair<std::string, std::function<void(IRCMessage, IRCClient *)>>>
         callbacks;
     // Contains game data that might change at any moment. Thread safe.
-    GameState game_state;
-    std::mutex game_state_lock;
+    std::atomic<GameState> game_state;
 
     void IRCThread();
     void ChangeState(bool state);
-    static void basicHandler(IRCMessage msg, IRCClient *irc, void *ptr);
+    static void basicHandler(IRCMessage msg, IRCClient *irc, void *context);
     void updateID();
-    void sendHeartbeat()
-    {
-        if (!data.is_commandandcontrol)
-            return;
-        std::string msg = "cc_heartbeat";
-        msg += std::to_string(data.id);
-        msg += '$' + std::to_string(game_state.party_size);
-        privmsg(msg, true);
-    }
+    void sendHeartbeat();
+    void sendAuth();
 
 public:
     void Disconnect()
@@ -105,27 +97,12 @@ public:
                     int port, bool is_bot = false);
     bool sendraw(std::string msg);
     bool privmsg(std::string msg, bool command = false);
-    void sendSignon(bool reply)
-    {
-        if (!data.is_commandandcontrol)
-            return;
-        std::string msg;
-        if (reply)
-            msg = "cc_signonrep";
-        else
-            msg = "cc_signon";
-        msg += '$' + std::to_string(data.id);
-        msg += '$' + std::to_string(data.is_bot);
-        privmsg(msg, true);
-    }
     void setState(GameState &state)
     {
-        std::lock_guard<std::mutex> lock(game_state_lock);
         game_state = state;
     }
     GameState getState()
     {
-        std::lock_guard<std::mutex> lock(game_state_lock);
         return game_state;
     }
 
