@@ -10,7 +10,7 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Lesser General Public License for more details.
  *
- * http://www.gnu.org/licenses/lgpl.html 
+ * http://www.gnu.org/licenses/lgpl.html
  */
 
 #ifndef _IRCCLIENT_H
@@ -59,8 +59,7 @@ struct IRCCommandPrefix
 struct IRCMessage
 {
     IRCMessage();
-    IRCMessage(std::string cmd, IRCCommandPrefix p, std::vector<std::string> params)
-        : command(cmd), prefix(p), parameters(params){};
+    IRCMessage(std::string cmd, IRCCommandPrefix p, std::vector<std::string> params) : command(cmd), prefix(p), parameters(params){};
 
     std::string command;
     IRCCommandPrefix prefix;
@@ -69,8 +68,7 @@ struct IRCMessage
 
 struct IRCCommandHook
 {
-    IRCCommandHook()
-        : function(NULL){};
+    IRCCommandHook() : function(NULL){};
 
     std::string command;
     std::function<void(IRCMessage /*message*/, IRCClient * /*client*/, void *context)> function;
@@ -81,8 +79,7 @@ struct IRCCommandHook
 class IRCClient
 {
 public:
-    IRCClient()
-        : _debug(false){};
+    IRCClient() : _debug(false){};
 
     bool InitSocket();
     bool Connect(const char * /*host*/, int /*port*/);

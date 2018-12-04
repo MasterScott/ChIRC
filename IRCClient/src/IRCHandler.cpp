@@ -10,38 +10,13 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Lesser General Public License for more details.
  *
- * http://www.gnu.org/licenses/lgpl.html 
+ * http://www.gnu.org/licenses/lgpl.html
  */
 
 #include "IRCHandler.h"
 
 IRCCommandHandler ircCommandTable[NUM_IRC_CMDS] = {
-    { "PRIVMSG", &IRCClient::HandlePrivMsg },
-    { "NOTICE", &IRCClient::HandleNotice },
-    { "JOIN", &IRCClient::HandleChannelJoinPart },
-    { "PART", &IRCClient::HandleChannelJoinPart },
-    { "NICK", &IRCClient::HandleUserNickChange },
-    { "QUIT", &IRCClient::HandleUserQuit },
-    { "353", &IRCClient::HandleChannelNamesList },
-    { "433", &IRCClient::HandleNicknameInUse },
-    { "001", &IRCClient::HandleServerMessage },
-    { "002", &IRCClient::HandleServerMessage },
-    { "003", &IRCClient::HandleServerMessage },
-    { "004", &IRCClient::HandleServerMessage },
-    { "005", &IRCClient::HandleServerMessage },
-    { "250", &IRCClient::HandleServerMessage },
-    { "251", &IRCClient::HandleServerMessage },
-    { "252", &IRCClient::HandleServerMessage },
-    { "253", &IRCClient::HandleServerMessage },
-    { "254", &IRCClient::HandleServerMessage },
-    { "255", &IRCClient::HandleServerMessage },
-    { "265", &IRCClient::HandleServerMessage },
-    { "266", &IRCClient::HandleServerMessage },
-    { "366", &IRCClient::HandleServerMessage },
-    { "372", &IRCClient::HandleServerMessage },
-    { "375", &IRCClient::HandleServerMessage },
-    { "376", &IRCClient::HandleServerMessage },
-    { "439", &IRCClient::HandleServerMessage },
+    { "PRIVMSG", &IRCClient::HandlePrivMsg }, { "NOTICE", &IRCClient::HandleNotice }, { "JOIN", &IRCClient::HandleChannelJoinPart }, { "PART", &IRCClient::HandleChannelJoinPart }, { "NICK", &IRCClient::HandleUserNickChange }, { "QUIT", &IRCClient::HandleUserQuit }, { "353", &IRCClient::HandleChannelNamesList }, { "433", &IRCClient::HandleNicknameInUse }, { "001", &IRCClient::HandleServerMessage }, { "002", &IRCClient::HandleServerMessage }, { "003", &IRCClient::HandleServerMessage }, { "004", &IRCClient::HandleServerMessage }, { "005", &IRCClient::HandleServerMessage }, { "250", &IRCClient::HandleServerMessage }, { "251", &IRCClient::HandleServerMessage }, { "252", &IRCClient::HandleServerMessage }, { "253", &IRCClient::HandleServerMessage }, { "254", &IRCClient::HandleServerMessage }, { "255", &IRCClient::HandleServerMessage }, { "265", &IRCClient::HandleServerMessage }, { "266", &IRCClient::HandleServerMessage }, { "366", &IRCClient::HandleServerMessage }, { "372", &IRCClient::HandleServerMessage }, { "375", &IRCClient::HandleServerMessage }, { "376", &IRCClient::HandleServerMessage }, { "439", &IRCClient::HandleServerMessage },
 };
 
 void IRCClient::HandleCTCP(IRCMessage message)
@@ -131,8 +106,7 @@ void IRCClient::HandleChannelNamesList(IRCMessage message)
 {
     std::string channel = message.parameters.at(2);
     std::string nicks   = message.parameters.at(3);
-    std::cout << "People on " << channel << ":" << std::endl
-              << nicks << std::endl;
+    std::cout << "People on " << channel << ":" << std::endl << nicks << std::endl;
 }
 
 void IRCClient::HandleNicknameInUse(IRCMessage message)

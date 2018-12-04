@@ -66,9 +66,7 @@ class ChIRC
     std::unordered_map<int, PeerData> peers;
     std::mutex peers_lock;
     // Contains backwards compatible callbacks
-    std::vector<
-        std::pair<std::string, std::function<void(IRCMessage, IRCClient *)>>>
-        callbacks;
+    std::vector<std::pair<std::string, std::function<void(IRCMessage, IRCClient *)>>> callbacks;
     // Contains game data that might change at any moment. Thread safe.
     std::atomic<GameState> game_state;
 
@@ -90,11 +88,7 @@ public:
         shouldrun = true;
         ChangeState(true);
     }
-    void UpdateData(std::string user, std::string nick,
-                    std::string comms_channel,
-                    std::string commandandcontrol_channel,
-                    std::string commandandcontrol_password, std::string address,
-                    int port, bool is_bot = false);
+    void UpdateData(std::string user, std::string nick, std::string comms_channel, std::string commandandcontrol_channel, std::string commandandcontrol_password, std::string address, int port, bool is_bot = false);
     bool sendraw(std::string msg);
     bool privmsg(std::string msg, bool command = false);
     void setState(GameState &state)
@@ -108,8 +102,7 @@ public:
 
     void Update();
 
-    void installCallback(std::string cmd,
-                         std::function<void(IRCMessage, IRCClient *)> func)
+    void installCallback(std::string cmd, std::function<void(IRCMessage, IRCClient *)> func)
     {
         callbacks.emplace_back(cmd, func);
     }

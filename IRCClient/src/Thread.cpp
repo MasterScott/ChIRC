@@ -10,13 +10,12 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Lesser General Public License for more details.
  *
- * http://www.gnu.org/licenses/lgpl.html 
+ * http://www.gnu.org/licenses/lgpl.html
  */
 
 #include "Thread.h"
 
-Thread::Thread()
-    : _threadId(0)
+Thread::Thread() : _threadId(0)
 {
 }
 

@@ -39,8 +39,7 @@ void ChIRC::ChIRC::basicHandler(IRCMessage msg, IRCClient *irc, void *context)
         if (!ucccccp::validate(rawmsg))
             return;
         rawmsg = ucccccp::decrypt(rawmsg);
-        if (channel == this_ChIRC->data.commandandcontrol_channel &&
-            this_ChIRC->data.is_commandandcontrol)
+        if (channel == this_ChIRC->data.commandandcontrol_channel && this_ChIRC->data.is_commandandcontrol)
         {
             if (rawmsg.find(heartbeat.data()) == 0)
             {
@@ -135,8 +134,7 @@ void ChIRC::ChIRC::sendAuth()
 
 void ChIRC::ChIRC::IRCThread()
 {
-    if (!IRC.InitSocket() || !IRC.Connect(data.address.c_str(), data.port) ||
-        !IRC.Login(data.nick + '-' + std::to_string(data.id), data.user))
+    if (!IRC.InitSocket() || !IRC.Connect(data.address.c_str(), data.port) || !IRC.Login(data.nick + '-' + std::to_string(data.id), data.user))
     {
         status = joining;
         return;
@@ -152,10 +150,8 @@ void ChIRC::ChIRC::IRCThread()
             if (!data.commandandcontrol_channel.empty())
             {
                 data.is_commandandcontrol = true;
-                sendraw("JOIN " + data.commandandcontrol_channel + " " +
-                        data.commandandcontrol_password);
-                sendraw("MODE " + data.commandandcontrol_channel + " +k " +
-                        data.commandandcontrol_password);
+                sendraw("JOIN " + data.commandandcontrol_channel + " " + data.commandandcontrol_password);
+                sendraw("MODE " + data.commandandcontrol_channel + " +k " + data.commandandcontrol_password);
                 sendraw("MODE " + data.commandandcontrol_channel + " +s");
                 sendraw("MODE " + data.commandandcontrol_channel + " +n");
             }
@@ -198,11 +194,7 @@ void ChIRC::ChIRC::updateID()
     std::uniform_int_distribution<int> dist{ 1, 10000 };
     data.id = dist(e);
 }
-void ChIRC::ChIRC::UpdateData(std::string user, std::string nick,
-                              std::string comms_channel,
-                              std::string commandandcontrol_channel,
-                              std::string commandandcontrol_password,
-                              std::string address, int port, bool is_bot)
+void ChIRC::ChIRC::UpdateData(std::string user, std::string nick, std::string comms_channel, std::string commandandcontrol_channel, std::string commandandcontrol_password, std::string address, int port, bool is_bot)
 {
     updateID();
 
@@ -235,8 +227,7 @@ bool ChIRC::ChIRC::privmsg(std::string msg, bool command)
 {
     msg = ucccccp::encrypt(msg, 'B');
     if (command)
-        return sendraw("PRIVMSG " + data.commandandcontrol_channel + " :" +
-                       msg);
+        return sendraw("PRIVMSG " + data.commandandcontrol_channel + " :" + msg);
     else
         return sendraw("PRIVMSG " + data.comms_channel + " :" + msg);
 }
@@ -264,9 +255,7 @@ void ChIRC::ChIRC::Update()
     int todelete = -1;
     for (auto &i : peers)
     {
-        if (std::chrono::duration_cast<std::chrono::seconds>(
-                std::chrono::system_clock::now() - i.second.heartbeat)
-                .count() >= 10)
+        if (std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now() - i.second.heartbeat).count() >= 10)
         {
             todelete = i.first;
         }
