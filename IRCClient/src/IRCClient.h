@@ -24,7 +24,7 @@
 
 class IRCClient;
 
-extern std::vector<std::string> split(std::string const&, char);
+extern std::vector<std::string> split(std::string const &, char);
 
 struct IRCCommandPrefix
 {
@@ -39,14 +39,14 @@ struct IRCCommandPrefix
         if (prefix.find("@") != std::string::npos)
         {
             tokens = split(prefix, '@');
-            nick = tokens.at(0);
-            host = tokens.at(1);
+            nick   = tokens.at(0);
+            host   = tokens.at(1);
         }
         if (nick != "" && nick.find("!") != std::string::npos)
         {
             tokens = split(nick, '!');
-            nick = tokens.at(0);
-            user = tokens.at(1);
+            nick   = tokens.at(0);
+            user   = tokens.at(1);
         }
     };
 
@@ -59,8 +59,8 @@ struct IRCCommandPrefix
 struct IRCMessage
 {
     IRCMessage();
-    IRCMessage(std::string cmd, IRCCommandPrefix p, std::vector<std::string> params) :
-        command(cmd), prefix(p), parameters(params) {};
+    IRCMessage(std::string cmd, IRCCommandPrefix p, std::vector<std::string> params)
+        : command(cmd), prefix(p), parameters(params){};
 
     std::string command;
     IRCCommandPrefix prefix;
@@ -69,10 +69,11 @@ struct IRCMessage
 
 struct IRCCommandHook
 {
-    IRCCommandHook() : function(NULL) {};
+    IRCCommandHook()
+        : function(NULL){};
 
     std::string command;
-    std::function<void(IRCMessage /*message*/, IRCClient* /*client*/, void *context)> function;
+    std::function<void(IRCMessage /*message*/, IRCClient * /*client*/, void *context)> function;
     // A ptr that can be used for whatever
     void *context;
 };
@@ -80,12 +81,16 @@ struct IRCCommandHook
 class IRCClient
 {
 public:
-    IRCClient() : _debug(false) {};
+    IRCClient()
+        : _debug(false){};
 
     bool InitSocket();
-    bool Connect(const char* /*host*/, int /*port*/);
+    bool Connect(const char * /*host*/, int /*port*/);
     void Disconnect();
-    bool Connected() { return _socket.Connected(); };
+    bool Connected()
+    {
+        return _socket.Connected();
+    };
 
     bool SendIRC(std::string /*data*/);
 
@@ -93,7 +98,7 @@ public:
 
     void ReceiveData();
 
-    void HookIRCCommand(std::string command, void *context /*ptr for whatever*/, std::function<void(IRCMessage /*message*/, IRCClient* /*client*/, void *context /*ptr for whatever*/)> function);
+    void HookIRCCommand(std::string command, void *context /*ptr for whatever*/, std::function<void(IRCMessage /*message*/, IRCClient * /*client*/, void *context /*ptr for whatever*/)> function);
 
     void Parse(std::string /*data*/);
 
@@ -109,7 +114,10 @@ public:
     void HandleNicknameInUse(IRCMessage /*message*/);
     void HandleServerMessage(IRCMessage /*message*/);
 
-    void Debug(bool debug) { _debug = debug; };
+    void Debug(bool debug)
+    {
+        _debug = debug;
+    };
 
 private:
     void HandleCommand(IRCMessage /*message*/);

@@ -19,8 +19,7 @@
 #include "IRCClient.h"
 #include "IRCHandler.h"
 
-
-std::vector<std::string> split(std::string const& text, char sep)
+std::vector<std::string> split(std::string const &text, char sep)
 {
     std::vector<std::string> tokens;
     size_t start = 0, end = 0;
@@ -38,7 +37,7 @@ bool IRCClient::InitSocket()
     return _socket.Init();
 }
 
-bool IRCClient::Connect(const char* host, int port)
+bool IRCClient::Connect(const char *host, int port)
 {
     return _socket.Connect(host, port);
 }
@@ -61,7 +60,7 @@ bool IRCClient::Login(std::string nick, std::string user, std::string password)
 
     if (SendIRC("HELLO"))
     {
-        if (!password.empty() && !SendIRC("PASS "+password))
+        if (!password.empty() && !SendIRC("PASS " + password))
             return false;
         if (SendIRC("NICK " + nick))
             if (SendIRC("USER " + user + " 8 * :Cpp IRC Client"))
@@ -77,7 +76,7 @@ void IRCClient::ReceiveData()
 
     std::string line;
     std::istringstream iss(buffer);
-    while(getline(iss, line))
+    while (getline(iss, line))
     {
         if (line.find("\r") != std::string::npos)
             line = line.substr(0, line.size() - 1);
@@ -148,7 +147,7 @@ void IRCClient::Parse(std::string data)
     int commandIndex = GetCommandHandler(command);
     if (commandIndex < NUM_IRC_CMDS)
     {
-        IRCCommandHandler& cmdHandler = ircCommandTable[commandIndex];
+        IRCCommandHandler &cmdHandler = ircCommandTable[commandIndex];
         (this->*cmdHandler.handler)(ircMessage);
     }
     else if (_debug)
@@ -158,13 +157,13 @@ void IRCClient::Parse(std::string data)
     CallHook(command, ircMessage);
 }
 
-void IRCClient::HookIRCCommand(std::string command, void *context /*ptr for whatever*/, std::function<void(IRCMessage /*message*/, IRCClient* /*client*/, void *context /*ptr for whatever*/)> function)
+void IRCClient::HookIRCCommand(std::string command, void *context /*ptr for whatever*/, std::function<void(IRCMessage /*message*/, IRCClient * /*client*/, void *context /*ptr for whatever*/)> function)
 {
     IRCCommandHook hook;
 
-    hook.command = command;
+    hook.command  = command;
     hook.function = function;
-    hook.context = context;
+    hook.context  = context;
 
     _hooks.push_back(hook);
 }

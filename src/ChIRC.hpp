@@ -19,7 +19,7 @@ struct IRCData
     int port{};
     bool is_commandandcontrol{ false };
     int id{};
-    bool is_bot{false};
+    bool is_bot{ false };
 };
 
 struct GameState

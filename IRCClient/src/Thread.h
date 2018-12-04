@@ -18,13 +18,13 @@
 
 #ifdef _WIN32
 #include <process.h>
-typedef void (*ThreadFunction)(void* /*param*/);
+typedef void (*ThreadFunction)(void * /*param*/);
 typedef void ThreadReturn;
 typedef int ThreadId;
 #else
 #include "pthread.h"
-typedef void* (*ThreadFunction)(void* /*param*/);
-typedef void* ThreadReturn;
+typedef void *(*ThreadFunction)(void * /*param*/);
+typedef void *ThreadReturn;
 typedef pthread_t ThreadId;
 #endif
 
@@ -37,7 +37,7 @@ public:
     Thread();
     ~Thread();
 
-    bool Start(ThreadFunction /*callback*/, void* /*param*/);
+    bool Start(ThreadFunction /*callback*/, void * /*param*/);
 };
 
 #endif

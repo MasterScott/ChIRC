@@ -15,39 +15,38 @@
 
 #include "IRCHandler.h"
 
-IRCCommandHandler ircCommandTable[NUM_IRC_CMDS] =
-{
-    { "PRIVMSG",            &IRCClient::HandlePrivMsg                   },
-    { "NOTICE",             &IRCClient::HandleNotice                    },
-    { "JOIN",               &IRCClient::HandleChannelJoinPart           },
-    { "PART",               &IRCClient::HandleChannelJoinPart           },
-    { "NICK",               &IRCClient::HandleUserNickChange            },
-    { "QUIT",               &IRCClient::HandleUserQuit                  },
-    { "353",                &IRCClient::HandleChannelNamesList          },
-    { "433",                &IRCClient::HandleNicknameInUse             },
-    { "001",                &IRCClient::HandleServerMessage             },
-    { "002",                &IRCClient::HandleServerMessage             },
-    { "003",                &IRCClient::HandleServerMessage             },
-    { "004",                &IRCClient::HandleServerMessage             },
-    { "005",                &IRCClient::HandleServerMessage             },
-    { "250",                &IRCClient::HandleServerMessage             },
-    { "251",                &IRCClient::HandleServerMessage             },
-    { "252",                &IRCClient::HandleServerMessage             },
-    { "253",                &IRCClient::HandleServerMessage             },
-    { "254",                &IRCClient::HandleServerMessage             },
-    { "255",                &IRCClient::HandleServerMessage             },
-    { "265",                &IRCClient::HandleServerMessage             },
-    { "266",                &IRCClient::HandleServerMessage             },
-    { "366",                &IRCClient::HandleServerMessage             },
-    { "372",                &IRCClient::HandleServerMessage             },
-    { "375",                &IRCClient::HandleServerMessage             },
-    { "376",                &IRCClient::HandleServerMessage             },
-    { "439",                &IRCClient::HandleServerMessage             },
+IRCCommandHandler ircCommandTable[NUM_IRC_CMDS] = {
+    { "PRIVMSG", &IRCClient::HandlePrivMsg },
+    { "NOTICE", &IRCClient::HandleNotice },
+    { "JOIN", &IRCClient::HandleChannelJoinPart },
+    { "PART", &IRCClient::HandleChannelJoinPart },
+    { "NICK", &IRCClient::HandleUserNickChange },
+    { "QUIT", &IRCClient::HandleUserQuit },
+    { "353", &IRCClient::HandleChannelNamesList },
+    { "433", &IRCClient::HandleNicknameInUse },
+    { "001", &IRCClient::HandleServerMessage },
+    { "002", &IRCClient::HandleServerMessage },
+    { "003", &IRCClient::HandleServerMessage },
+    { "004", &IRCClient::HandleServerMessage },
+    { "005", &IRCClient::HandleServerMessage },
+    { "250", &IRCClient::HandleServerMessage },
+    { "251", &IRCClient::HandleServerMessage },
+    { "252", &IRCClient::HandleServerMessage },
+    { "253", &IRCClient::HandleServerMessage },
+    { "254", &IRCClient::HandleServerMessage },
+    { "255", &IRCClient::HandleServerMessage },
+    { "265", &IRCClient::HandleServerMessage },
+    { "266", &IRCClient::HandleServerMessage },
+    { "366", &IRCClient::HandleServerMessage },
+    { "372", &IRCClient::HandleServerMessage },
+    { "375", &IRCClient::HandleServerMessage },
+    { "376", &IRCClient::HandleServerMessage },
+    { "439", &IRCClient::HandleServerMessage },
 };
 
 void IRCClient::HandleCTCP(IRCMessage message)
 {
-    std::string to = message.parameters.at(0);
+    std::string to   = message.parameters.at(0);
     std::string text = message.parameters.at(message.parameters.size() - 1);
 
     // Remove '\001' from start/end of the string
@@ -70,7 +69,7 @@ void IRCClient::HandleCTCP(IRCMessage message)
 
 void IRCClient::HandlePrivMsg(IRCMessage message)
 {
-    std::string to = message.parameters.at(0);
+    std::string to   = message.parameters.at(0);
     std::string text = message.parameters.at(message.parameters.size() - 1);
 
     // Handle Client-To-Client Protocol
@@ -91,7 +90,7 @@ void IRCClient::HandleNotice(IRCMessage message)
     std::string from = message.prefix.nick != "" ? message.prefix.nick : message.prefix.prefix;
     std::string text;
 
-    if( !message.parameters.empty() )
+    if (!message.parameters.empty())
         text = message.parameters.at(message.parameters.size() - 1);
 
     if (!text.empty() && text[0] == '\001')
@@ -112,7 +111,7 @@ void IRCClient::HandleNotice(IRCMessage message)
 void IRCClient::HandleChannelJoinPart(IRCMessage message)
 {
     std::string channel = message.parameters.at(0);
-    std::string action = message.command == "JOIN" ? "joins" : "leaves";
+    std::string action  = message.command == "JOIN" ? "joins" : "leaves";
     std::cout << message.prefix.nick << " " << action << " " << channel << std::endl;
 }
 
@@ -131,8 +130,9 @@ void IRCClient::HandleUserQuit(IRCMessage message)
 void IRCClient::HandleChannelNamesList(IRCMessage message)
 {
     std::string channel = message.parameters.at(2);
-    std::string nicks = message.parameters.at(3);
-    std::cout << "People on " << channel << ":" << std::endl << nicks << std::endl;
+    std::string nicks   = message.parameters.at(3);
+    std::cout << "People on " << channel << ":" << std::endl
+              << nicks << std::endl;
 }
 
 void IRCClient::HandleNicknameInUse(IRCMessage message)
@@ -142,7 +142,7 @@ void IRCClient::HandleNicknameInUse(IRCMessage message)
 
 void IRCClient::HandleServerMessage(IRCMessage message)
 {
-    if( message.parameters.empty() )
+    if (message.parameters.empty())
         return;
 
     std::vector<std::string>::const_iterator itr = message.parameters.begin();

@@ -15,7 +15,10 @@
 
 #include "Thread.h"
 
-Thread::Thread() : _threadId(0) {}
+Thread::Thread()
+    : _threadId(0)
+{
+}
 
 Thread::~Thread()
 {
@@ -24,7 +27,7 @@ Thread::~Thread()
 #endif
 }
 
-bool Thread::Start(ThreadFunction callback, void* param)
+bool Thread::Start(ThreadFunction callback, void *param)
 {
 #ifdef _WIN32
     _threadId = _beginthread(callback, 0, param);

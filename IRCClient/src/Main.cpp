@@ -31,17 +31,17 @@ void signalHandler(int signal)
 class ConsoleCommandHandler
 {
 public:
-    bool AddCommand(std::string name, int argCount, void (*handler)(std::string /*params*/, IRCClient* /*client*/))
+    bool AddCommand(std::string name, int argCount, void (*handler)(std::string /*params*/, IRCClient * /*client*/))
     {
         CommandEntry entry;
         entry.argCount = argCount;
-        entry.handler = handler;
+        entry.handler  = handler;
         std::transform(name.begin(), name.end(), name.begin(), towlower);
         _commands.insert(std::pair<std::string, CommandEntry>(name, entry));
         return true;
     }
 
-    void ParseCommand(std::string command, IRCClient* client)
+    void ParseCommand(std::string command, IRCClient *client)
     {
         if (_commands.empty())
         {
@@ -54,7 +54,7 @@ public:
 
         std::string name = command.substr(0, command.find(" "));
         std::string args = command.substr(command.find(" ") + 1);
-        int argCount = std::count(args.begin(), args.end(), ' ');
+        int argCount     = std::count(args.begin(), args.end(), ' ');
 
         std::transform(name.begin(), name.end(), name.begin(), towlower);
 
@@ -78,7 +78,7 @@ private:
     struct CommandEntry
     {
         int argCount;
-        void (*handler)(std::string /*arguments*/, IRCClient* /*client*/);
+        void (*handler)(std::string /*arguments*/, IRCClient * /*client*/);
     };
 
     std::map<std::string, CommandEntry> _commands;
@@ -86,16 +86,16 @@ private:
 
 ConsoleCommandHandler commandHandler;
 
-void msgCommand(std::string arguments, IRCClient* client)
+void msgCommand(std::string arguments, IRCClient *client)
 {
-    std::string to = arguments.substr(0, arguments.find(" "));
+    std::string to   = arguments.substr(0, arguments.find(" "));
     std::string text = arguments.substr(arguments.find(" ") + 1);
 
     std::cout << "To " + to + ": " + text << std::endl;
     client->SendIRC("PRIVMSG " + to + " :" + text);
 };
 
-void joinCommand(std::string channel, IRCClient* client)
+void joinCommand(std::string channel, IRCClient *client)
 {
     if (channel[0] != '#')
         channel = "#" + channel;
@@ -103,7 +103,7 @@ void joinCommand(std::string channel, IRCClient* client)
     client->SendIRC("JOIN " + channel);
 }
 
-void partCommand(std::string channel, IRCClient* client)
+void partCommand(std::string channel, IRCClient *client)
 {
     if (channel[0] != '#')
         channel = "#" + channel;
@@ -111,9 +111,9 @@ void partCommand(std::string channel, IRCClient* client)
     client->SendIRC("PART " + channel);
 }
 
-void ctcpCommand(std::string arguments, IRCClient* client)
+void ctcpCommand(std::string arguments, IRCClient *client)
 {
-    std::string to = arguments.substr(0, arguments.find(" "));
+    std::string to   = arguments.substr(0, arguments.find(" "));
     std::string text = arguments.substr(arguments.find(" ") + 1);
 
     std::transform(text.begin(), text.end(), text.begin(), towupper);
@@ -121,7 +121,7 @@ void ctcpCommand(std::string arguments, IRCClient* client)
     client->SendIRC("PRIVMSG " + to + " :\001" + text + "\001");
 }
 
-ThreadReturn inputThread(void* client)
+ThreadReturn inputThread(void *client)
 {
     std::string command;
 
@@ -130,16 +130,16 @@ ThreadReturn inputThread(void* client)
     commandHandler.AddCommand("part", 1, &partCommand);
     commandHandler.AddCommand("ctcp", 2, &ctcpCommand);
 
-    while(true)
+    while (true)
     {
         getline(std::cin, command);
         if (command == "")
             continue;
 
         if (command[0] == '/')
-            commandHandler.ParseCommand(command, (IRCClient*)client);
+            commandHandler.ParseCommand(command, (IRCClient *) client);
         else
-            ((IRCClient*)client)->SendIRC(command);
+            ((IRCClient *) client)->SendIRC(command);
 
         if (command == "quit")
             break;
@@ -152,7 +152,7 @@ ThreadReturn inputThread(void* client)
 #endif
 }
 
-int main(int argc, char* argv[])
+int main(int argc, char *argv[])
 {
     if (argc < 3)
     {
@@ -160,8 +160,8 @@ int main(int argc, char* argv[])
         return 1;
     }
 
-    char* host = argv[1];
-    int port = atoi(argv[2]);
+    char *host = argv[1];
+    int port   = atoi(argv[2]);
     std::string nick("MyIRCClient");
     std::string user("IRCClient");
 
