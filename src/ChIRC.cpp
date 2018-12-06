@@ -204,7 +204,11 @@ void ChIRC::ChIRC::UpdateData(std::string user, std::string nick, std::string co
 
     data.user                       = user;
     data.nick                       = nick;
+    if (!comms_channel.empty() && comms_channel.front() != '#')
+        comms_channel = '#' + comms_channel;
     data.comms_channel              = comms_channel;
+    if (!commandandcontrol_channel.empty() && commandandcontrol_channel.front() != '#')
+        commandandcontrol_channel = '#' + commandandcontrol_channel;
     data.commandandcontrol_channel  = commandandcontrol_channel;
     data.commandandcontrol_password = commandandcontrol_password;
     data.address                    = address;
