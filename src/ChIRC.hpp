@@ -25,6 +25,7 @@ struct IRCData
 struct GameState
 {
     int party_size = -1;
+    bool is_ingame = false;
 };
 
 // Used for storing data of C&C clients
@@ -34,6 +35,7 @@ struct PeerData
     std::string nickname;
     bool is_bot    = false;
     int party_size = -1;
+    bool is_ingame = false;
 };
 
 enum statusenum

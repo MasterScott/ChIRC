@@ -1,4 +1,4 @@
-#include "ChIRC.hpp"
+﻿#include "ChIRC.hpp"
 #include <algorithm>
 #include <random>
 #include "../ucccccp/ucccccp.hpp"
@@ -45,13 +45,15 @@ void ChIRC::ChIRC::basicHandler(IRCMessage msg, IRCClient *irc, void *context)
             {
                 int id                = 0;
                 int party_size        = 0;
+                bool is_ingame        = false;
                 size_t id_loc         = rawmsg.find('$') + 1;
                 size_t party_size_loc = rawmsg.find('$', id_loc) + 1;
-
+                size_t ingame_loc     = rawmsg.find('$', party_size_loc) + 1;
                 try
                 {
                     id         = std::stoi(rawmsg.substr(id_loc, party_size_loc - id_loc));
-                    party_size = std::stoi(rawmsg.substr(party_size_loc));
+                    party_size = std::stoi(rawmsg.substr(party_size_loc, ingame_loc - party_size_loc));
+                    is_ingame  = std::stoi(rawmsg.substr(ingame_loc));
                 }
                 catch (std::invalid_argument)
                 {
@@ -71,6 +73,7 @@ void ChIRC::ChIRC::basicHandler(IRCMessage msg, IRCClient *irc, void *context)
                     auto &peer      = this_ChIRC->peers[id];
                     peer.heartbeat  = std::chrono::system_clock::now();
                     peer.party_size = party_size;
+                    peer.is_ingame  = is_ingame;
                 }
             }
             else if (rawmsg.find(auth.data()) == 0)
@@ -122,7 +125,7 @@ void ChIRC::ChIRC::basicHandler(IRCMessage msg, IRCClient *irc, void *context)
 
 void ChIRC::ChIRC::sendHeartbeat()
 {
-    std::string output = std::string(heartbeat) + '$' + std::to_string(data.id) + "$" + std::to_string(game_state.load().party_size);
+    std::string output = std::string(heartbeat) + '$' + std::to_string(data.id) + "$" + std::to_string(game_state.load().party_size) + "$" + std::to_string(game_state.load().is_ingame);
     privmsg(output, true);
 }
 
@@ -202,11 +205,11 @@ void ChIRC::ChIRC::UpdateData(std::string user, std::string nick, std::string co
     std::replace(nick.begin(), nick.end(), ' ', '_');
     std::replace(nick.begin(), nick.end(), ' ', '_');
 
-    data.user                       = user;
-    data.nick                       = nick;
+    data.user = user;
+    data.nick = nick;
     if (!comms_channel.empty() && comms_channel.front() != '#')
         comms_channel = '#' + comms_channel;
-    data.comms_channel              = comms_channel;
+    data.comms_channel = comms_channel;
     if (!commandandcontrol_channel.empty() && commandandcontrol_channel.front() != '#')
         commandandcontrol_channel = '#' + commandandcontrol_channel;
     data.commandandcontrol_channel  = commandandcontrol_channel;
