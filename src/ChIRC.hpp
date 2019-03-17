@@ -20,6 +20,7 @@ struct IRCData
     bool is_commandandcontrol{ false };
     int id{};
     bool is_bot{ false };
+    unsigned int steamid;
 };
 
 struct GameState
@@ -33,9 +34,10 @@ struct PeerData
 {
     std::chrono::time_point<std::chrono::system_clock> heartbeat{};
     std::string nickname;
-    bool is_bot    = false;
-    int party_size = -1;
-    bool is_ingame = false;
+    bool is_bot          = false;
+    int party_size       = -1;
+    bool is_ingame       = false;
+    unsigned int steamid = 0;
 };
 
 enum statusenum
@@ -90,7 +92,7 @@ public:
         shouldrun = true;
         ChangeState(true);
     }
-    void UpdateData(std::string user, std::string nick, std::string comms_channel, std::string commandandcontrol_channel, std::string commandandcontrol_password, std::string address, int port, bool is_bot = false);
+    void UpdateData(std::string user, std::string nick, std::string comms_channel, std::string commandandcontrol_channel, std::string commandandcontrol_password, std::string address, int port, bool is_bot, unsigned int steamid);
     bool sendraw(std::string msg);
     bool privmsg(std::string msg, bool command = false);
     void setState(GameState &state)

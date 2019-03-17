@@ -78,15 +78,18 @@ void ChIRC::ChIRC::basicHandler(IRCMessage msg, IRCClient *irc, void *context)
             }
             else if (rawmsg.find(auth.data()) == 0)
             {
-                int id            = 0;
-                bool is_bot       = false;
-                size_t id_loc     = rawmsg.find('$') + 1;
-                size_t is_bot_loc = rawmsg.find('$', id_loc) + 1;
+                int id               = 0;
+                bool is_bot          = false;
+                unsigned int steamid = 0;
+                size_t id_loc        = rawmsg.find('$') + 1;
+                size_t is_bot_loc    = rawmsg.find('$', id_loc) + 1;
+                size_t steamid_loc   = rawmsg.find('$', is_bot_loc) + 1;
 
                 try
                 {
-                    id     = std::stoi(rawmsg.substr(id_loc, is_bot_loc - id_loc));
-                    is_bot = std::stoi(rawmsg.substr(is_bot_loc));
+                    id      = std::stoi(rawmsg.substr(id_loc, is_bot_loc - id_loc));
+                    is_bot  = std::stoi(rawmsg.substr(is_bot_loc, steamid_loc - is_bot_loc));
+                    steamid = std::stoi(rawmsg.substr(steamid_loc));
                 }
                 catch (std::invalid_argument)
                 {
@@ -98,6 +101,7 @@ void ChIRC::ChIRC::basicHandler(IRCMessage msg, IRCClient *irc, void *context)
                 peer.heartbeat        = std::chrono::system_clock::now();
                 peer.is_bot           = is_bot;
                 peer.nickname         = msg.prefix.nick;
+                peer.steamid          = steamid;
                 this_ChIRC->peers[id] = std::move(peer);
             }
             else if (rawmsg.find(reqauth.data()) == 0)
@@ -131,7 +135,7 @@ void ChIRC::ChIRC::sendHeartbeat()
 
 void ChIRC::ChIRC::sendAuth()
 {
-    std::string output = std::string(auth) + '$' + std::to_string(data.id) + '$' + std::to_string(data.is_bot);
+    std::string output = std::string(auth) + '$' + std::to_string(data.id) + '$' + std::to_string(data.is_bot) + '$' + std::to_string(data.steamid);
     privmsg(output, true);
 }
 
@@ -197,7 +201,7 @@ void ChIRC::ChIRC::updateID()
     std::uniform_int_distribution<int> dist{ 1, 10000 };
     data.id = dist(e);
 }
-void ChIRC::ChIRC::UpdateData(std::string user, std::string nick, std::string comms_channel, std::string commandandcontrol_channel, std::string commandandcontrol_password, std::string address, int port, bool is_bot)
+void ChIRC::ChIRC::UpdateData(std::string user, std::string nick, std::string comms_channel, std::string commandandcontrol_channel, std::string commandandcontrol_password, std::string address, int port, bool is_bot, unsigned int steamid)
 {
     updateID();
 
@@ -217,6 +221,7 @@ void ChIRC::ChIRC::UpdateData(std::string user, std::string nick, std::string co
     data.address                    = address;
     data.port                       = port;
     data.is_bot                     = is_bot;
+    data.steamid                    = steamid;
 }
 
 bool ChIRC::ChIRC::sendraw(std::string msg)
