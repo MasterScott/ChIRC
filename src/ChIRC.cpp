@@ -245,13 +245,14 @@ bool ChIRC::ChIRC::privmsg(std::string msg, bool command)
 }
 void ChIRC::ChIRC::Update()
 {
+    static Timer last_restart{};
     if (status == joining)
     {
         IRC.Disconnect();
         thread.join();
         status = off;
     }
-    if (shouldrun && status == off)
+    if (shouldrun && status == off && last_restart.test_and_set(30000))
     {
         updateID();
         ChangeState(true);

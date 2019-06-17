@@ -62,9 +62,8 @@ bool IRCSocket::Init()
 
 bool IRCSocket::Connect(char const *host, int port)
 {
-    hostent *he;
-
-    if (!(he = gethostbyname(host)))
+    hostent *he = gethostbyname(host);
+    if (!he)
     {
         std::cout << "Could not resolve host: " << host << std::endl;
 #ifdef _WIN32
